@@ -1,0 +1,7 @@
+build/
+devel/
+logs/
+2011_09_26_drive_0001_sync/
+figure/
+.catkin_tools
+.git
