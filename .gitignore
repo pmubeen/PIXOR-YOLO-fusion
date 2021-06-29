@@ -5,3 +5,6 @@ logs/
 figure/
 .catkin_tools
 .git
+__pycache__/
+experiments/
+*.so
