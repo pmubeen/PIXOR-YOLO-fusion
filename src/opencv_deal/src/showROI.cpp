@@ -92,7 +92,7 @@ class OpencvHandler
       pcl::PointCloud<pcl::PointXYZRGB> Rec;
       pcl::fromROSMsg (input, Rec);   //关键的一句数据的转换
       cv::Mat projectionMatrix,cameraMatrix,velo2camera;
-      std::string calibFilePath="/home/p720/Desktop/fusion-ws/src/opencv_deal/src/calib.txt"; 
+      std::string calibFilePath="/calib.txt"; 
 
       readOdometryCalib(calibFilePath,projectionMatrix,cameraMatrix,velo2camera);
 

@@ -1,7 +1,7 @@
 build/
 devel/
 logs/
-2011_09_26_drive_0001_sync/
+kitti_dataset/
 figure/
 .catkin_tools
 .git

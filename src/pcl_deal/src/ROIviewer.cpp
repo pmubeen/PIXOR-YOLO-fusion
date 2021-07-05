@@ -45,7 +45,7 @@ public:
     void RecCB(const sensor_msgs::PointCloud2 &input)
     {
 	pcl::PointCloud<pcl::PointXYZRGB> Rec;
-        pcl::fromROSMsg (input, Rec);   //关键的一句数据的转换
+        pcl::fromROSMsg (input, Rec);   //Key data conversion
         int *beg=std::begin(shape);
 	int *last=std::end(shape);
 	//for(int i=0;i<shape_num;++i)
@@ -57,7 +57,7 @@ public:
 	shape_num=0;
          for(int i=0;i<Rec.points.size();++i)
         {
-           //向视窗添加立方体模型并渲染，只显示线框。若不要显示线框将下面一行代码注释即可。
+           //Add a cube model to the window and rendered, only the wireframe is displayed.If you do not display the wireframe, you can comment below.
             viewer.addCube(Rec.points[i].y,Rec.points[i].x,Rec.points[i].r*(Rec.points[i].b-1), Rec.points[i].z, -1.7,float(Rec.points[i].g)/10.0-10,1,1,1,std::to_string(i));
            viewer.setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME,std::to_string(i));
            shape_num=shape_num+1; 
@@ -81,7 +81,7 @@ public:
    
 /*    for(int i=0;i<Rec.points.size();++i)
     {
-    //向视窗添加立方体模型并渲染，只显示线框。若不要显示线框将下面一行代码注释即可。
+    / / Add a cube model to the window and rendered, only the wireframe is displayed.If you do not display the wireframe, you can comment below.
     viewer->addCube(Rec.points[i].y,Rec.points[i].x,Rec.points[i].r, Rec.points[i].z, -1.7, Rec.points[i].g);
     
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME,"cube");

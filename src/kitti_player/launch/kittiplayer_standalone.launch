@@ -1,14 +1,15 @@
 <launch>
 
 <!-- The namespace where images are published -->
-
+    <arg name="drive" default="0001"/>
+    <arg name="f" default="1"/>
     <arg    name="directory"
-     default="/home/p720/Desktop/fusion-ws/src/kitti_player/2011_09_26_drive_0001_sync"
+     default="$(find kitti_player)/kitti_dataset/2011_09_26_drive_$(arg drive)_sync"
 	/>
 
     <node   name="kitti_player" pkg="kitti_player" type="kitti_player"
             required="true"
-           args= "-d $(arg directory) -f 1 -a 1 "
+           args= "-d $(arg directory) -f $(arg f) -a 1 "
  
             output="screen"
             />
