@@ -20,6 +20,7 @@ from postprocess import filter_pred
 
 #ROS imports
 import rospy
+from std_msgs.msg import Header
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import PointCloud2, PointField
 from sensor_msgs.msg import Image
@@ -242,9 +243,13 @@ def get_bev(scan, label_list):
 	return intensity
 	
 def publishImage(intensity, pub):
-	bridge = CvBridge()
-	image_message = bridge.cv2_to_imgmsg(intensity, encoding="rgb8")
-	pub.publish(image_message)
+	image = Image()
+	image.header.stamp = rospy.Time.now()
+	image.height = 800
+	image.width = 700
+	image.encoding = 'rgb8'
+	image.data = intensity.tostring()
+	pub.publish(image)
 	
 class KittiSub(object):
 	def __init__(self, name, device):
