@@ -37,26 +37,39 @@ def publishImage(intensity, pub):
 	image_message = bridge.cv2_to_imgmsg(intensity, encoding="rgb8")
 	pub.publish(image_message)
 	print("Image published by ros node.\n")
+# Run this to draw original bounding boxes with the filter
+# def drawBBox(image, roiPts):
+# 	colour = (255, 0, 0)
+# 	thickness = 2
+# 	for p in pc2.read_points(roiPts, field_names=("x", "y", "z", "rgb"), skip_nans=True):
+# 		rgb = helper.float_to_rgb(p[3])
+# 		xmin, ymin, zmin = get_pts(p[1], rgb[0]*(rgb[2]-1), -1.7)
+# 		xmax, ymax, zmax = get_pts(p[0], p[2], rgb[1]/10-10)
+# 		del_x = xmax-xmin
+# 		del_y = ymax-ymin
+# 		if del_x and del_y !=0:
+# 			ratio = del_x/del_y
+# 			if 4.5 <= ratio <= 5.5:
+# 				scale = del_x/12
+# 				if 9 >= scale >= 7.5:
+# 					image = cv2.rectangle(image, (xmin,ymin), (xmax,ymax), colour, thickness)
+# 			elif 1 <= ratio <= 5:
+# 				scale = del_x/4
+# 				if 4 <= scale <= 12:
+# 					image = cv2.rectangle(image, (xmin,ymin), (xmax,ymax), colour, thickness)
+	
+# 	print("Bounding Boxes Drawn.")
 
+#Run this to draw the new bounding boxes
 def drawBBox(image, roiPts):
 	colour = (255, 0, 0)
 	thickness = 2
-	for p in pc2.read_points(roiPts, field_names=("x", "y", "z", "rgb"), skip_nans=True):
-		rgb = helper.float_to_rgb(p[3])
-		xmin, ymin, zmin = get_pts(p[1], rgb[0]*(rgb[2]-1), -1.7)
-		xmax, ymax, zmax = get_pts(p[0], p[2], rgb[1]/10-10)
+	for p in pc2.read_points(roiPts, field_names=("x", "y", "z", "intensity"), skip_nans=True):
+		xmin, ymin = int(p[0]), int(p[1])
+		xmax, ymax = int(p[2]), int(p[3])
 		del_x = xmax-xmin
 		del_y = ymax-ymin
-		if del_x and del_y !=0:
-			ratio = del_x/del_y
-			if 4.5 <= ratio <= 5.5:
-				scale = del_x/12
-				#if 9 >= scale >= 7.5:
-				#	image = cv2.rectangle(image, (xmin,ymin), (xmax,ymax), colour, thickness)
-			elif 1 <= ratio <= 5:
-				scale = del_x/4
-				if 4 <= scale <= 12:
-					image = cv2.rectangle(image, (xmin,ymin), (xmax,ymax), colour, thickness)
+		image = cv2.rectangle(image, (xmin,ymin), (xmax,ymax), colour, thickness)
 	
 	print("Bounding Boxes Drawn.")
 		

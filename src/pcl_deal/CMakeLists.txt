@@ -132,9 +132,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/pcl_deal.cpp
-# )
+
 add_definitions(${PCL_DEFINITIONS})
 #set(${PCL_LIBRARIES}  /usr/local/lib/libpcl*.so)
 add_executable(pointdeal src/pointdeal.cpp)
@@ -149,6 +147,9 @@ target_link_libraries(ROIviewer ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable(pclvirualtest src/pclvirualtest.cpp)
 target_link_libraries(pclvirualtest ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(pointdealcpy src/pointdealcopy.cpp)
+target_link_libraries(pointdealcpy ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${Opencv_LIBS})
 
 
 ## Add cmake target dependencies of the library
