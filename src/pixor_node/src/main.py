@@ -286,7 +286,7 @@ class KittiSub(object):
 			big = self.raw.is_bigendian
 			fields = self.raw.fields
 			field_names = ("x", "y", "z", "intensity")
-			fmt = '<fffxxxxfff'
+			fmt = '<fffxxxxf'
 		    	
 			c_nparray = ctypes.c_void_p(self.scan.ctypes.data)
 			c_pcdata = ctypes.create_string_buffer(self.raw.data, len(self.raw.data))
@@ -296,11 +296,15 @@ class KittiSub(object):
 			c_row_step = ctypes.c_uint32(self.raw.row_step)
 			self.preprocess_lib.processBEV(c_nparray, c_pcdata, c_height, c_width, c_point_step, c_row_step)
 			
+			#dt1 = time.time()
+			#print("BEV preprocessing completed in {} seconds".format(dt1 - t))
+			
 			#t_preprocess = time.time()
 			#dt_preprocess = t_preprocess - t
 			#print("preprocess elapsed in {} seconds".format(dt_preprocess))
 			
 			#format scan
+			input_np = self.scan
 			self.scan = torch.from_numpy(self.scan)
 			self.scan = self.scan.permute(2, 0, 1)
 			
@@ -309,12 +313,14 @@ class KittiSub(object):
 				'easy': np.array([], dtype=np.float32),
 				'medium': np.array([], dtype=np.float32),
 				'hard': np.array([], dtype=np.float32)
-			} 
+			}
 
 			with torch.no_grad():
 				input = torch.reshape(self.scan, (1, 36, 800, 700))
 				input = input.to(self.device)
-				input_np = input[0].cpu().permute(1, 2, 0).numpy()
+				
+				dt2 = time.time()
+				#print("Network input formatting completed in {} seconds".format(dt2 - dt1))
 				
 				#t_in_format = time.time()
 				#dt_in_format = t_in_format - t_preprocess
@@ -322,19 +328,30 @@ class KittiSub(object):
 				
 				predictions = self.net(input)
 				
+				#dt3 = time.time()
+				#print("Network prediction completed in {} seconds".format(dt3 - dt2))
+				
+				#This is a major bottleneck (~100ms)
 				for pred in predictions:
 					corners, scores = filter_pred(self.config, pred)
 
 					for k in corners:
 						for corner in corners[k]:
 							preds[k] = np.append(preds[k], corner)
-
-
+							
+				#dt4 = time.time()
+				#print("prediction filtering completed in {} seconds".format(dt4 - dt3))
+				
+				#this takes no time
 				for k in preds:
 					preds[k] = preds[k].reshape(-1, 4, 2)
 					
+					
 			#dt_network = time.time() - t_in_format
 			#print("Network elapsed in {} seconds".format(dt_network)) 
+			
+			dt = time.time()
+			print("Completed in {} seconds".format(dt - t))
 			
 			intensity = get_bev(input_np, preds)
 			publishImage(intensity, self.pub)

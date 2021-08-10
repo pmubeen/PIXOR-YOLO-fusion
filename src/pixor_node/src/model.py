@@ -204,7 +204,8 @@ class Decoder(nn.Module):
 		super(Decoder, self).__init__()
 		self.geometry = [geom["L1"], geom["L2"], geom["W1"], geom["W2"]]
 		self.grid_size = 0.4
-
+		
+		#mean and std_dev only for vehicles I believe
 		self.target_mean = [0.008, 0.001, 0.202, 0.2, 0.43, 1.368]
 		self.target_std_dev = [0.866, 0.5, 0.954, 0.668, 0.09, 0.111]
 
@@ -253,7 +254,7 @@ class Decoder(nn.Module):
 		front_left_y = centre_y + l/2 * sin_t + w/2 * cos_t
 
 		decoded_reg = torch.cat([rear_left_x, rear_left_y, rear_right_x, rear_right_y, front_right_x, front_right_y, front_left_x, front_left_y], dim=1)
-
+		
 		return decoded_reg
 
 class PIXOR(nn.Module):

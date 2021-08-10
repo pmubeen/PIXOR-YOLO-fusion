@@ -89,11 +89,28 @@ def filter_pred(config, pred):
 		return pred_boxes, pred_scores
 
 	corners = torch.zeros((num_boxes, 8))
-	for i in range(7, 15):
-		corners[:, i - 7] = torch.masked_select(pred[i, ...], activation)
+	#corners2 = torch.zeros((num_boxes, 8))
+	
+	#t = time.time()
+	
+	#for i in range(7, 15):
+	#	corners[:, i - 7] = torch.masked_select(pred[i, ...], activation)
 		
-	corners = corners.view(-1, 4, 2).numpy()
+	#dt = time.time()
+	
+	activation_ = activation.expand(torch.Size((8, 200, 175)))
+	corners = torch.masked_select(pred[7:15, ...], activation_)
+	corners = corners.view((8, num_boxes))
+	corners = torch.transpose(corners, 0, 1)
+	
+	#dtt = time.time()
+	#print("method 2: {}".format(dtt - dt))
+		
+	corners = corners.view(-1, 4, 2).cpu().numpy()
 	scores = torch.masked_select(cls_pred, activation).cpu().numpy()
+	
+	#dt3 = time.time()
+	#print("dt3: {}".format(dt3 - dtt))
 
 	# NMS
 	#t_0 = time.time()

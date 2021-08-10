@@ -1,6 +1,7 @@
 build/
 devel/
 logs/
+kitti_dataset/
 2011_09_26_drive_0001_sync/
 figure/
 .catkin_tools
