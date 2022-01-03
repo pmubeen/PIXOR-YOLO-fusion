@@ -13,14 +13,21 @@ find_package(catkin REQUIRED COMPONENTS
                     cv_bridge
                     image_transport
                     dynamic_reconfigure
+                    message_generation
 )
 
 find_package(PCL 1.8 REQUIRED)
-find_package(Boost REQUIRED COMPONENTS thread system program_options)
+find_package(Boost REQUIRED COMPONENTS thread system program_options serialization)
 
+add_message_files(DIRECTORY msg FILES BboxLes.msg BboxL.msg)
+
+generate_messages(
+  DEPENDENCIES
+   std_msgs
+)
 
 generate_dynamic_reconfigure_options(cfg/kitti_player.cfg)
-catkin_package(CATKIN_DEPENDS dynamic_reconfigure)
+catkin_package(CATKIN_DEPENDS dynamic_reconfigure message_runtime)
 
 include_directories(
 		${}
@@ -38,6 +45,8 @@ add_executable(kitti_player src/kitti_player.cpp)
 target_link_libraries(kitti_player ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${Boost_LIBRARIES})
 
 target_link_libraries(kitti_player ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${OpenCV_LIBS})
+
+add_dependencies(kitti_player ${catkin_EXPORTED_TARGETS})
 #Add all files in subdirectories of the project in
 # a dummy_target so qtcreator have access to all files
 FILE(GLOB children ${CMAKE_SOURCE_DIR}/*)

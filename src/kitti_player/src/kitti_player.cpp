@@ -55,6 +55,10 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <time.h>
+#include "tracklets.h"
+#include "ground_truth.hpp"
+#include <kitti_player/BboxL.h>
+#include <kitti_player/BboxLes.h>
 
 using namespace std;
 using namespace pcl;
@@ -572,6 +576,7 @@ int main(int argc, char **argv)
     string dir_velodyne_points  ;
     string full_filename_velodyne;
     string dir_timestamp_velodyne; //average of start&end (time of scan)
+    string dir_tracklets;
     string str_support;
     cv::Mat cv_image00;
     cv::Mat cv_image01;
@@ -592,6 +597,10 @@ int main(int argc, char **argv)
     sensor_msgs::Image ros_msg02;
     sensor_msgs::Image ros_msg03;
 
+    kitti_player::BboxLes Bboxes;
+    kitti_player::BboxL Bbox;
+    std::vector<object> frame;
+
 
 //    sensor_msgs::CameraInfo ros_cameraInfoMsg;
     sensor_msgs::CameraInfo ros_cameraInfoMsg_camera00;
@@ -606,11 +615,14 @@ int main(int argc, char **argv)
     ros::Publisher gps_pub_initial   = node.advertise<sensor_msgs::NavSatFix>           ("oxts/gps_initial", 1, true);
     ros::Publisher imu_pub           = node.advertise<sensor_msgs::Imu>                 ("oxts/imu", 1, true);
     ros::Publisher disp_pub          = node.advertise<stereo_msgs::DisparityImage>      ("preprocessed_disparity", 1, true);
+    ros::Publisher truth_pub         = node.advertise<kitti_player::BboxLes>                ("ground_truth",1,true);
 
     sensor_msgs::NavSatFix  ros_msgGpsFix;
     sensor_msgs::NavSatFix  ros_msgGpsFixInitial;   // This message contains the first reading of the file
     bool                    firstGpsData = true;    // Flag to store the ros_msgGpsFixInitial message
     sensor_msgs::Imu        ros_msgImu;
+
+    Tracklets *tracklets = new Tracklets(); // Loading tracklet file
 
     ros::Subscriber sub = node.subscribe("/kitti_player/synch", 1, synchCallback);    // refs #600
 
@@ -659,6 +671,7 @@ int main(int argc, char **argv)
     dir_oxts             = options.path;
     dir_velodyne_points  = options.path;
     dir_image04          = options.path;
+    dir_tracklets        = options.path;
 
     (*(options.path.end() - 1) != '/' ? dir_root            = options.path + "/"                      : dir_root            = options.path);
     (*(options.path.end() - 1) != '/' ? dir_image00         = options.path + "/image_00/data/"        : dir_image00         = options.path + "image_00/data/");
@@ -677,7 +690,7 @@ int main(int argc, char **argv)
     (*(options.path.end() - 1) != '/' ? dir_timestamp_velodyne   = options.path + "/velodyne_points/"     : dir_timestamp_velodyne  = options.path + "velodyne_points/");
 
     (*(options.path.end() - 1) != '/' ? dir_timestamp_velodyne   = options.path + "/velodyne_points/"     : dir_timestamp_velodyne  = options.path + "velodyne_points/");
-
+    (*(options.path.end() - 1) != '/' ? dir_tracklets            = options.path + "/tracklet_labels.xml"  : dir_tracklets           = options.path + "/tracklet_labels.xml");
     // Check all the directories
     if (
         (options.all_data       && (   (opendir(dir_image00.c_str())            == NULL) ||
@@ -879,29 +892,21 @@ int main(int argc, char **argv)
     ros_cameraInfoMsg_camera00.header.frame_id = ros::this_node::getName();
     ros_cameraInfoMsg_camera00.height = 0;
     ros_cameraInfoMsg_camera00.width  = 0;
-    //ros_cameraInfoMsg_camera00.D.resize(5);
-    //ros_cameraInfoMsg_camera00.distortion_model=sensor_msgs::distortion_models::PLUMB_BOB;
 
     ros_cameraInfoMsg_camera01.header.stamp = ros::Time::now();
     ros_cameraInfoMsg_camera01.header.frame_id = ros::this_node::getName();
     ros_cameraInfoMsg_camera01.height = 0;
     ros_cameraInfoMsg_camera01.width  = 0;
-    //ros_cameraInfoMsg_camera01.D.resize(5);
-    //ros_cameraInfoMsg_camera00.distortion_model=sensor_msgs::distortion_models::PLUMB_BOB;
 
     ros_cameraInfoMsg_camera02.header.stamp = ros::Time::now();
     ros_cameraInfoMsg_camera02.header.frame_id = ros::this_node::getName();
     ros_cameraInfoMsg_camera02.height = 0;
     ros_cameraInfoMsg_camera02.width  = 0;
-    //ros_cameraInfoMsg_camera02.D.resize(5);
-    //ros_cameraInfoMsg_camera02.distortion_model=sensor_msgs::distortion_models::PLUMB_BOB;
 
     ros_cameraInfoMsg_camera03.header.stamp = ros::Time::now();
     ros_cameraInfoMsg_camera03.header.frame_id = ros::this_node::getName();
     ros_cameraInfoMsg_camera03.height = 0;
     ros_cameraInfoMsg_camera03.width  = 0;
-    //ros_cameraInfoMsg_camera03.D.resize(5);
-    //ros_cameraInfoMsg_camera03.distortion_model=sensor_msgs::distortion_models::PLUMB_BOB;
 
     if (options.color || options.all_data)
     {
@@ -945,6 +950,10 @@ int main(int argc, char **argv)
     double cv_min, cv_max = 0.0f;
     ros::Publisher publisher_GT_RTK;
     publisher_GT_RTK = node.advertise<visualization_msgs::MarkerArray> ("/kitti_player/GT_RTK", 1);
+
+    tracklets->loadFromFile(dir_tracklets);
+    std::vector<std::vector<object>> frames = objectsfromFrame(tracklets);
+
 
     // This is the main KITTI_PLAYER Loop
     do
@@ -1200,7 +1209,22 @@ int main(int argc, char **argv)
                 header_support.stamp = parseTime(str_support).stamp;
                 publish_velodyne(map_pub, full_filename_velodyne, &header_support);
             }
-
+            //Publishing ground truth
+            frame = frames[entries_played];
+            for (int j=0; j<frame.size(); j++) {
+                Bbox.minx = minfloat(frame[j].xcoords);
+                Bbox.maxx = maxfloat(frame[j].xcoords);
+                Bbox.miny = minfloat(frame[j].ycoords);
+                Bbox.maxy = maxfloat(frame[j].ycoords);
+                Bbox.minz = minfloat(frame[j].zcoords);
+                Bbox.maxz = maxfloat(frame[j].zcoords);
+                Bbox.Class = frame[j].obj_type;
+                Bboxes.bboxl.push_back(Bbox);
+            }
+            Bboxes.header.frame_id = "base_link";
+            Bboxes.header.stamp = header_support.stamp;
+            truth_pub.publish(Bboxes);
+            Bboxes.bboxl.erase(Bboxes.bboxl.begin(),Bboxes.bboxl.end());
 
         }
 
@@ -1322,14 +1346,18 @@ int main(int argc, char **argv)
 
         }
 
+        
         ++progress;
         entries_played++;
 
+
         if (!options.synchMode)
             loop_rate.sleep();
-        if (entries_played == total_entries) {
-            entries_played = 0;
-        }
+
+        //Uncomment this if you want to run kitti_player in infinite loop
+        // if (entries_played == total_entries) {
+        //     entries_played = 0;
+        // }
     }
     while (entries_played <= total_entries - 1 && ros::ok());
 

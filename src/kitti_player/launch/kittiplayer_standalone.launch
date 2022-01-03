@@ -10,14 +10,14 @@
     <node   name="kitti_player" pkg="kitti_player" type="kitti_player"
             required="true"
            args= "-d $(arg directory) -f $(arg f) -a 1 "
- 
             output="screen"
             />
 
 <!-- tf   -->
-   <node pkg="tf" type="static_transform_publisher" name="visual_odometry_camera_frame_to_visual_odometry_car_frame"
-          args="0 0 0 -1.570796 0 -1.570796 base_link kitti_player 50" />
-
+   <!-- <node pkg="tf" type="static_transform_publisher" name="visual_odometry_camera_frame_to_visual_odometry_car_frame"
+          args="0 0 0 -1.570796 0 -1.570796 base_link kitti_player 50" /> -->
+    <node pkg="tf" type="static_transform_publisher" name="visual_odometry_camera_frame_to_visual_odometry_car_frame"
+          args="0 0 0 0 0 0 base_link kitti_player 50" />
 
 
  <!-- Launch RViz-->

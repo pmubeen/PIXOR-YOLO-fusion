@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>depthGet</name>
+  <name>depthget</name>
   <version>0.0.0</version>
   <description>The depthGet package</description>
 
@@ -53,6 +53,7 @@
   <build_depend>pcl_msgs</build_depend>
   <build_depend>pcl_ros</build_depend>
   <build_depend>sensor_msgs</build_depend>
+  <build_depend>kitti_player</build_depend>
   <build_export_depend>pcl_conversions</build_export_depend>
   <build_export_depend>pcl_msgs</build_export_depend>
   <build_export_depend>pcl_ros</build_export_depend>
